@@ -32,10 +32,16 @@ responsibility — one gathers, one decides.
 
 ## Tech Stack
 
+**Agent**
 - Google Agent Development Kit (ADK)
 - Gemini 2.5 Flash-Lite
 - OpenRouteService API (routing)
 - Python
+
+**Frontend**
+- React (Vite)
+- Tailwind CSS v4
+- FastAPI (backend wrapper exposing the agent as a REST endpoint)
 
 ## Known Corridors
 
@@ -47,6 +53,8 @@ responsibility — one gathers, one decides.
 | Electronic City – Hosur Road | 8:30–10:00 AM, 6:00–8:00 PM | 2.4x |
 
 ## Setup
+
+### Agent (CLI / ADK Web)
 
 ```bash
 git clone https://github.com/Mohammad-Adnan-Shakil/bengaluru-commute-agent.git
@@ -63,6 +71,24 @@ cd ..
 adk web
 ```
 
+### Full Stack (Frontend + Backend)
+
+```bash
+# Terminal 1 — backend (FastAPI wrapping the ADK agent)
+cd bengaluru-commute-agent
+venv\Scripts\activate
+pip install fastapi uvicorn
+uvicorn api:app --reload --port 8001
+
+# Terminal 2 — frontend (React + Tailwind)
+cd frontend
+npm install
+npm run dev
+```
+
+Visit `http://localhost:5173` for the chat interface, or use `adk web`'s built-in UI
+at `http://127.0.0.1:8000` to see the raw agent trace (tool calls, sub-agent delegation).
+
 ## Example Queries
 
 - "What's the traffic like from Silk Board to ORR at 8:45 AM?"
@@ -76,6 +102,8 @@ adk web
 - Currently covers 4 major corridors. Expansion would require crowd-sourced or municipal
   traffic data for broader city coverage.
 - No persistent memory across sessions yet — planned as a next iteration.
+- Free-tier Gemini API quota limits sustained testing; production deployment would require
+  a billed tier for reliability.
 
 ## Author
 
