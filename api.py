@@ -110,6 +110,22 @@ def extract_congestion_level(events):
     return None
 
 
+def extract_response_text(final_response):
+    """
+    Safely extract text from final_response.
+    Handles cases where Gemini fails mid-conversation (e.g. 503 after a
+    successful tool call), leaving final_response.content or .parts as None.
+    """
+    if not final_response:
+        return "No response"
+    if not final_response.content or not final_response.content.parts:
+        return "Agent response was incomplete (Gemini high demand). Please try again in a few seconds."
+    text = final_response.content.parts[0].text
+    if not text:
+        return "Agent response was incomplete (Gemini high demand). Please try again in a few seconds."
+    return text
+
+
 @app.post("/chat")
 async def chat(query: Query):
     if MOCK_MODE:
@@ -149,7 +165,7 @@ async def chat(query: Query):
     bottleneck_indices = _compute_bottleneck_indices(route_coords, congestion_level)
 
     return {
-        "response": final_response.content.parts[0].text if final_response else "No response",
+        "response": extract_response_text(final_response),
         "tool_trace": tool_calls,
         "session_id": session_id,
         "route_coordinates": route_coords,
