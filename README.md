@@ -6,7 +6,6 @@ it reasons about known Bengaluru traffic bottlenecks and helps you decide when a
 Built for the Google AI Agent Builder Series 2026 (Open Innovation track).
 
 **Live demo:** https://bengaluru-commute-agent.vercel.app
-**Video demo:** [link]
 
 ## Why This Exists
 
