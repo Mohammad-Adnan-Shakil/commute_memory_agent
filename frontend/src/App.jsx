@@ -3,6 +3,7 @@ import Header from "./components/Header";
 import EmptyState from "./components/EmptyState";
 import MessageList from "./components/MessageList";
 import ChatInput from "./components/ChatInput";
+import PreviouslyAsked from "./components/PreviouslyAsked";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
 
@@ -53,6 +54,10 @@ export default function App() {
     }
   }, [input, sessionId]);
 
+  const latestUserQuery = messages.length > 0
+    ? [...messages].reverse().find((m) => m.role === "user")?.text || ""
+    : "";
+
   const handleExampleClick = useCallback((text) => {
     sendMessage(text);
   }, [sendMessage]);
@@ -78,6 +83,9 @@ export default function App() {
           <MessageList messages={messages} loading={loading} />
         )}
       </div>
+      {messages.length > 0 && !loading && (
+        <PreviouslyAsked queryText={latestUserQuery} />
+      )}
       <ChatInput
         input={input}
         setInput={setInput}
