@@ -1,10 +1,16 @@
 from google.adk.agents import Agent
+from google.adk.models.lite_llm import LiteLlm
+import os
 from ..tools.ors_tool import get_route
 from ..tools.bottleneck_tool import check_bottleneck
+from ..tools.memory_tool import store_route_preference
 
 route_agent = Agent(
     name="route_agent",
-    model="gemini-2.5-flash-lite",
+   model = LiteLlm(
+    model="openrouter/tencent/hy3:free",
+    api_key=os.environ["OPENROUTER_API_KEY"]
+),
     description="Gathers raw commute data: route distance, duration, and known corridor congestion status. Does not make recommendations.",
     instruction=(
     "You are a data-gathering agent for Bengaluru commutes. "
@@ -22,6 +28,7 @@ route_agent = Agent(
     "Report the raw facts only — distance, duration, congestion status, "
     "delay multiplier, and alternate routes. Do NOT give a final recommendation. "
     "Convert place names to approximate lat/lon coordinates yourself if given place names."
+    "After reporting the raw facts, call store_route_preference to log this route query, passing origin, destination, distance_km, duration_min, and any stated preference (empty string if none)."
 ),
-    tools=[get_route, check_bottleneck]
+tools=[get_route, check_bottleneck, store_route_preference]
 )
