@@ -41,7 +41,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://bengaluru-commute-agent.vercel.app",
+        "http://localhost:5175",
+        "https://commute-memory-agent-navy.vercel.app",
     ],
     allow_methods=["*"],
     allow_headers=["*"],
@@ -71,7 +72,8 @@ async def run_with_retry(user_id: str, session_id: str, message_content: Content
             return events
         except Exception as e:
             is_last_attempt = attempt == max_retries - 1
-            if "503" in str(e) and not is_last_attempt:
+            is_rate_limit = "429" in str(e) or "RateLimitError" in str(e) or "rate-limited" in str(e).lower()
+            if is_rate_limit and not is_last_attempt:
                 await asyncio.sleep(5 * (attempt + 1))
                 continue
             raise
@@ -126,10 +128,10 @@ def extract_response_text(final_response):
     if not final_response:
         return "No response"
     if not final_response.content or not final_response.content.parts:
-        return "Agent response was incomplete (Gemini high demand). Please try again in a few seconds."
+        return "Agent response was incomplete (model provider high demand). Please try again in a few seconds."
     text = final_response.content.parts[0].text
     if not text:
-        return "Agent response was incomplete (Gemini high demand). Please try again in a few seconds."
+        return "Agent response was incomplete (model provider high demand). Please try again in a few seconds."
     return text
 
 
@@ -152,7 +154,7 @@ async def chat(query: Query):
         events = await run_with_retry("user", session_id, message_content)
     except Exception as e:
         return {
-            "response": f"Agent temporarily unavailable (Gemini high demand). Try again in a few seconds. [{str(e)[:120]}]",
+            "response": f"Agent temporarily unavailable (model provider high demand). Try again in a few seconds. [{str(e)[:120]}]",
             "tool_trace": [],
             "session_id": session_id
         }
