@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import previousQueries from "../mockMemory";
 
-function findMatchingQuery(queryText) {
+export function findMatchingQuery(queryText) {
   if (!queryText || !queryText.trim()) return null;
 
   const lower = queryText.toLowerCase();
