@@ -1,0 +1,12 @@
+.env
+venv/
+__pycache__/
+*.pyc
+commute_agent/.adk/
+frontend/
+tests/
+aws_lambda/iam/
+.git/
+.gitignore
+README.md
+*.md

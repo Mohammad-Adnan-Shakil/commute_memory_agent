@@ -3,7 +3,7 @@ from google.adk.models.lite_llm import LiteLlm
 import os
 from ..tools.ors_tool import get_route
 from ..tools.bottleneck_tool import check_bottleneck
-from ..tools.memory_tool import store_route_preference
+from ..tools.memory_tool import store_route_preference, recall_similar_routes
 
 route_agent = Agent(
     name="route_agent",
@@ -27,8 +27,14 @@ route_agent = Agent(
     "or that you cannot fulfill the request if get_route returned valid data. "
     "Report the raw facts only — distance, duration, congestion status, "
     "delay multiplier, and alternate routes. Do NOT give a final recommendation. "
+    "Before calling get_route, call recall_similar_routes with the origin and destination "
+"to check if this route or a similar one was queried before in this session. "
+"If a match is found with a stored preference, briefly mention it in your final "
+"response (e.g. 'You previously asked about this route and preferred to avoid highways') "
+"before reporting the fresh route data. If no match is found, proceed normally without "
+"mentioning anything."
     "Convert place names to approximate lat/lon coordinates yourself if given place names."
     "After reporting the raw facts, call store_route_preference to log this route query, passing origin, destination, distance_km, duration_min, and any stated preference (empty string if none)."
 ),
-tools=[get_route, check_bottleneck, store_route_preference]
+tools=[get_route, check_bottleneck, store_route_preference, recall_similar_routes]
 )
