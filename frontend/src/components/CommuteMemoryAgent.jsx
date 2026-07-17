@@ -39,18 +39,6 @@ function parseQuery(raw) {
   return { from: "Current location", to: cleaned || "Destination" };
 }
 
-function extractDistance(text) {
-  if (!text) return null;
-  const match = text.match(/(\d+(?:\.\d+)?)\s*(?:km|kilometers?)/i);
-  return match ? parseFloat(match[1]) : null;
-}
-
-function extractDuration(text) {
-  if (!text) return null;
-  const match = text.match(/(\d+)\s*(?:min|minutes?|mins)/i);
-  return match ? parseInt(match[1], 10) : null;
-}
-
 function mapCongestionLevel(level) {
   if (!level) return "Moderate";
   const upper = level.toUpperCase();
@@ -77,11 +65,22 @@ function BackgroundFX() {
 
       <svg className="absolute inset-0 h-full w-full opacity-[0.06]" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <pattern id="grid-lines" width="48" height="48" patternUnits="userSpaceOnUse">
-            <path d="M 48 0 L 0 0 0 48" fill="none" stroke="white" strokeWidth="0.5" />
+          <pattern id="network-lines" width="120" height="120" patternUnits="userSpaceOnUse">
+            <path d="M0 60 L40 20 L80 60 L120 30" fill="none" stroke="rgba(45,212,191,0.6)" strokeWidth="0.6" />
+            <path d="M20 0 L50 40 L30 80 L60 120" fill="none" stroke="rgba(45,212,191,0.4)" strokeWidth="0.5" />
+            <path d="M90 0 L70 50 L100 90 L80 120" fill="none" stroke="rgba(45,212,191,0.4)" strokeWidth="0.5" />
+            <path d="M0 100 L40 80 L80 110 L120 90" fill="none" stroke="rgba(45,212,191,0.5)" strokeWidth="0.5" />
+            <circle cx="40" cy="20" r="2" fill="rgba(45,212,191,0.7)" />
+            <circle cx="80" cy="60" r="1.5" fill="rgba(45,212,191,0.5)" />
+            <circle cx="50" cy="40" r="1.5" fill="rgba(45,212,191,0.6)" />
+            <circle cx="30" cy="80" r="2" fill="rgba(45,212,191,0.5)" />
+            <circle cx="70" cy="50" r="1.5" fill="rgba(45,212,191,0.6)" />
+            <circle cx="100" cy="90" r="1.5" fill="rgba(45,212,191,0.5)" />
+            <circle cx="40" cy="80" r="2" fill="rgba(45,212,191,0.6)" />
+            <circle cx="80" cy="110" r="1.5" fill="rgba(45,212,191,0.5)" />
           </pattern>
         </defs>
-        <rect width="100%" height="100%" fill="url(#grid-lines)" />
+        <rect width="100%" height="100%" fill="url(#network-lines)" />
       </svg>
 
       {[0, 1, 2].map((i) => (
@@ -136,7 +135,7 @@ function StatCard({ icon, label, value, sub, accent = "teal", delay = 0 }) {
       <div className={cn("mb-3 flex h-10 w-10 items-center justify-center rounded-xl ring-1", accentMap[accent])}>
         {icon}
       </div>
-      <p className="text-[11px] uppercase tracking-wider text-neutral-500">{label}</p>
+      <p className="text-[11px] uppercase tracking-wider text-neutral-500 font-[family-name:var(--font-heading)]">{label}</p>
       <p className="mt-1 text-2xl font-semibold tracking-tight text-white">{value}</p>
       {sub && <p className="mt-0.5 text-xs text-neutral-500">{sub}</p>}
     </motion.div>
@@ -203,9 +202,8 @@ export default function CommuteMemoryAgent() {
       setSessionId(data.session_id);
 
       const { from, to } = parseQuery(raw);
-      const responseText = data.response || "";
-      const distanceKm = extractDistance(responseText);
-      const durationMin = extractDuration(responseText);
+      const distanceKm = data.distance_km;
+      const durationMin = data.duration_min;
       const congestion = mapCongestionLevel(data.congestion_level);
       const etaMin = durationMin ? durationMin + 3 : null;
 
@@ -216,10 +214,10 @@ export default function CommuteMemoryAgent() {
         recalled: !!currentMemoryMatch,
         memoryNote: currentMemoryMatch ? currentMemoryMatch.preference_text : undefined,
         stats: {
-          distanceKm: distanceKm !== null ? String(distanceKm) : "--",
-          durationMin: durationMin !== null ? durationMin : 0,
+          distanceKm: distanceKm != null ? String(distanceKm) : "--",
+          durationMin: durationMin != null ? durationMin : "--",
           congestion,
-          etaMin: etaMin !== null ? etaMin : 0,
+          etaMin: etaMin != null ? etaMin : "--",
         },
         routeCoordinates: data.route_coordinates || null,
         congestionLevel: data.congestion_level || null,
@@ -271,7 +269,7 @@ export default function CommuteMemoryAgent() {
             Live Agent &middot; Bengaluru Transit Network
           </div>
 
-          <h1 className="max-w-2xl text-balance text-4xl font-medium tracking-tighter sm:text-5xl md:text-6xl">
+          <h1 className="max-w-2xl text-balance text-4xl font-medium tracking-tighter sm:text-5xl md:text-6xl font-[family-name:var(--font-heading)]">
             Commute Memory{" "}
             <span className="bg-gradient-to-r from-teal-300 via-sky-300 to-teal-400 bg-clip-text text-transparent">
               Agent
@@ -423,7 +421,7 @@ export default function CommuteMemoryAgent() {
                 <StatCard
                   icon={<Clock className="h-4 w-4" />}
                   label="Duration"
-                  value={`${result.stats.durationMin} min`}
+                  value={result.stats.durationMin !== "--" ? `${result.stats.durationMin} min` : "-- min"}
                   accent="sky"
                   delay={0.12}
                 />
@@ -448,7 +446,7 @@ export default function CommuteMemoryAgent() {
                 <StatCard
                   icon={<Zap className="h-4 w-4" />}
                   label="ETA"
-                  value={`${result.stats.etaMin} min`}
+                  value={result.stats.etaMin !== "--" ? `${result.stats.etaMin} min` : "-- min"}
                   sub="incl. buffer"
                   accent="amber"
                   delay={0.26}
@@ -467,6 +465,8 @@ export default function CommuteMemoryAgent() {
                     congestion={result.congestionLevel}
                     routeCoordinates={result.routeCoordinates}
                     bottleneckIndices={result.bottleneckIndices}
+                    originName={result.from}
+                    destName={result.to}
                   />
                 </motion.div>
               )}
@@ -480,7 +480,7 @@ export default function CommuteMemoryAgent() {
             animate={{ opacity: 1 }}
             className="mt-10 w-full"
           >
-            <p className="mb-3 flex items-center gap-1.5 text-xs uppercase tracking-wider text-neutral-500">
+            <p className="mb-3 flex items-center gap-1.5 text-xs uppercase tracking-wider text-neutral-500 font-[family-name:var(--font-heading)]">
               <History className="h-3.5 w-3.5" /> Session memory
             </p>
             <div className="flex flex-wrap gap-2">
@@ -508,7 +508,7 @@ export default function CommuteMemoryAgent() {
       </div>
 
       <div className="relative z-10 border-t border-white/[0.06] bg-white/[0.015] py-8">
-        <p className="mb-6 text-center text-[11px] uppercase tracking-widest text-neutral-500">
+        <p className="mb-6 text-center text-[11px] uppercase tracking-widest text-neutral-500 font-[family-name:var(--font-heading)]">
           Agentic memory flow
         </p>
         <div className="mx-auto flex max-w-xl items-center justify-between px-6">

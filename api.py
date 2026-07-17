@@ -119,6 +119,22 @@ def extract_congestion_level(events):
     return None
 
 
+def extract_distance_duration(events):
+    """Scans agent events for get_route's tool response, pulls distance_km and duration_min directly."""
+    for event in events:
+        try:
+            function_responses = event.get_function_responses()
+        except AttributeError:
+            continue
+        if function_responses:
+            for fr in function_responses:
+                if fr.name == "get_route":
+                    result = fr.response
+                    if isinstance(result, dict) and "distance_km" in result and "duration_min" in result:
+                        return result["distance_km"], result["duration_min"]
+    return None, None
+
+
 def extract_response_text(final_response):
     """
     Safely extract text from final_response.
@@ -171,6 +187,7 @@ async def chat(query: Query):
     ]
     route_coords = extract_route_geometry(events)
     congestion_level = extract_congestion_level(events)
+    distance_km, duration_min = extract_distance_duration(events)
 
     # Fallback: parse congestion from text response if tool response wasn't found
     if congestion_level is None:
@@ -191,5 +208,7 @@ async def chat(query: Query):
         "session_id": session_id,
         "route_coordinates": route_coords,
         "congestion_level": congestion_level,
-        "bottleneck_segment_indices": bottleneck_indices
+        "bottleneck_segment_indices": bottleneck_indices,
+        "distance_km": distance_km,
+        "duration_min": duration_min
     }

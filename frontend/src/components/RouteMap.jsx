@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import { MapContainer, TileLayer, Polyline, Circle, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Polyline, Circle, Marker, Tooltip, useMap } from "react-leaflet";
+import L from "leaflet";
 
 const CORRIDOR_ROUTES = {
   silk_board_orr: {
@@ -103,7 +104,22 @@ function ScrollActivator() {
   return null;
 }
 
-export default function RouteMap({ corridor, congestion, routeCoordinates, bottleneckIndices }) {
+function makeIcon(color, glowColor) {
+  return L.divIcon({
+    className: "",
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+    html: `<div style="width:18px;height:18px;position:relative;">
+      <div style="position:absolute;inset:0;border-radius:50%;background:${glowColor};filter:blur(6px);opacity:0.7;"></div>
+      <div style="position:absolute;inset:3px;border-radius:50%;background:${color};border:2px solid ${color};box-shadow:0 0 8px ${glowColor};"></div>
+    </div>`,
+  });
+}
+
+const ORIGIN_ICON = makeIcon("#f59e0b", "rgba(245,158,11,0.5)");
+const DEST_ICON = makeIcon("#06b6d4", "rgba(6,182,212,0.5)");
+
+export default function RouteMap({ corridor, congestion, routeCoordinates, bottleneckIndices, originName, destName }) {
   const mapRef = useRef(null);
   const congestionLevel = congestion?.toUpperCase();
   const indices = bottleneckIndices || [];
@@ -220,6 +236,17 @@ export default function RouteMap({ corridor, congestion, routeCoordinates, bottl
             }}
           />
         )}
+
+        <Marker position={route.origin} icon={ORIGIN_ICON}>
+          <Tooltip direction="top" offset={[0, -10]} opacity={0.9}>
+            {originName || "Origin"}
+          </Tooltip>
+        </Marker>
+        <Marker position={route.dest} icon={DEST_ICON}>
+          <Tooltip direction="top" offset={[0, -10]} opacity={0.9}>
+            {destName || "Destination"}
+          </Tooltip>
+        </Marker>
       </MapContainer>
 
       <div className="px-3 py-1.5 bg-neutral-900/80 border-t border-neutral-800/30 flex items-center justify-between text-[10px]">
