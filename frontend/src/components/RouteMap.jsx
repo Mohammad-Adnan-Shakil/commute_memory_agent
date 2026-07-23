@@ -1,6 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { MapContainer, TileLayer, Polyline, Circle, Marker, Tooltip, useMap } from "react-leaflet";
 import L from "leaflet";
+import { Maximize2, Minimize2 } from "lucide-react";
 
 const CORRIDOR_ROUTES = {
   silk_board_orr: {
@@ -121,6 +122,7 @@ const DEST_ICON = makeIcon("#06b6d4", "rgba(6,182,212,0.5)");
 
 export default function RouteMap({ corridor, congestion, routeCoordinates, bottleneckIndices, originName, destName }) {
   const mapRef = useRef(null);
+  const [expanded, setExpanded] = useState(false);
   const congestionLevel = congestion?.toUpperCase();
   const indices = bottleneckIndices || [];
 
@@ -168,6 +170,14 @@ export default function RouteMap({ corridor, congestion, routeCoordinates, bottl
         </span>
       </div>
 
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="absolute top-2 right-2 z-[1000] flex items-center justify-center w-7 h-7 rounded-md bg-black/40 backdrop-blur-md border border-white/10 text-white/60 hover:text-white/80 hover:bg-black/60 transition-all"
+        aria-label={expanded ? "Collapse map" : "Expand map"}
+      >
+        {expanded ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+      </button>
+
       <MapContainer
         center={[12.9716, 77.5946]}
         zoom={11}
@@ -176,10 +186,10 @@ export default function RouteMap({ corridor, congestion, routeCoordinates, bottl
         scrollWheelZoom={true}
         dragging={true}
         zoomControl={false}
-        className="w-full h-64 sm:h-80 z-0"
+        className={`w-full z-0 transition-all duration-300 ${expanded ? "h-96" : "h-64 sm:h-80"}`}
         ref={mapRef}
         role="application"
-        aria-label="Interactive route map"
+        aria-label={`Interactive route map showing ${route.name}`}
       >
         <TileLayer
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
@@ -195,33 +205,11 @@ export default function RouteMap({ corridor, congestion, routeCoordinates, bottl
             positions={[seg.from, seg.to]}
             pathOptions={{
               color: seg.color,
-              weight: 5,
+              weight: expanded ? 6 : 5,
               opacity: 0.9,
             }}
           />
         ))}
-
-        <Circle
-          center={route.origin}
-          pathOptions={{
-            color: "#f59e0b",
-            fillColor: "#f59e0b",
-            fillOpacity: 1,
-            weight: 2,
-            radius: 80,
-          }}
-        />
-
-        <Circle
-          center={route.dest}
-          pathOptions={{
-            color: "#06b6d4",
-            fillColor: "#06b6d4",
-            fillOpacity: 0.2,
-            weight: 2,
-            radius: 100,
-          }}
-        />
 
         {indices.length > 0 && (
           <Circle
@@ -236,6 +224,28 @@ export default function RouteMap({ corridor, congestion, routeCoordinates, bottl
             }}
           />
         )}
+
+        <Circle
+          center={route.origin}
+          pathOptions={{
+            color: "#f59e0b",
+            fillColor: "#f59e0b",
+            fillOpacity: 1,
+            weight: 2,
+            radius: expanded ? 100 : 80,
+          }}
+        />
+
+        <Circle
+          center={route.dest}
+          pathOptions={{
+            color: "#06b6d4",
+            fillColor: "#06b6d4",
+            fillOpacity: 0.2,
+            weight: 2,
+            radius: expanded ? 120 : 100,
+          }}
+        />
 
         <Marker position={route.origin} icon={ORIGIN_ICON}>
           <Tooltip direction="top" offset={[0, -10]} opacity={0.9}>
