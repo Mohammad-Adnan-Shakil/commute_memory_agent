@@ -1,20 +1,37 @@
-"""
-Lambda function: memory_handler
-Acts as the write/query boundary between the commute agent and CockroachDB.
-DB connection is stubbed until CockroachDB cluster is live (Aug 9).
-"""
-
 import json
+import os
 import uuid
 from datetime import datetime, timezone
+import psycopg2
+
+# Reused across warm Lambda invocations to avoid reconnecting every call
+_connection = None
+
+def _get_connection():
+    global _connection
+    if _connection is None or _connection.closed:
+        _connection = psycopg2.connect(os.environ["COCKROACHDB_CONNECTION_STRING"])
+    return _connection
+
+
+def _execute_query(query: str, params: tuple, fetch: bool = False):
+    """
+    Executes a query against the real CockroachDB cluster.
+    Set fetch=True for SELECT queries to return rows.
+    """
+    conn = _get_connection()
+    with conn.cursor() as cur:
+        cur.execute(query, params)
+        if fetch:
+            rows = cur.fetchall()
+            colnames = [desc[0] for desc in cur.description]
+            conn.commit()
+            return [dict(zip(colnames, row)) for row in rows]
+        conn.commit()
+        return {"status": "success"}
 
 
 def _recall_similar_routes(payload: dict) -> dict:
-    """
-    Queries route_preferences for semantically similar past queries
-    using vector distance search (CockroachDB Distributed Vector Indexing).
-    Stubbed to return mock results until the cluster is live.
-    """
     query = (
         "SELECT origin, destination, preference_text, created_at "
         "FROM route_preferences "
@@ -23,28 +40,8 @@ def _recall_similar_routes(payload: dict) -> dict:
         "LIMIT 3"
     )
     params = (payload["session_id"], payload.get("embedding", []))
-    _execute_query(query, params)
-
-    # STUB: fake matches until real DB is wired (Aug 9)
-    mock_results = [
-        {
-            "origin": "Koramangala",
-            "destination": "Indiranagar",
-            "preference_text": "avoid highways",
-            "created_at": "2026-07-10T08:15:00+00:00",
-        }
-    ]
-    return {"status": "recalled", "matches": mock_results}
-
-
-# --- Stubbed DB layer — replace with real CockroachDB connection on Aug 9 ---
-def _execute_query(query: str, params: tuple) -> dict:
-    """
-    Placeholder for the real CockroachDB connection (via psycopg2 or
-    CockroachDB MCP Server). Currently just logs what WOULD be executed.
-    """
-    print(f"[STUB DB CALL] query={query} | params={params}")
-    return {"status": "stub_success"}
+    results = _execute_query(query, params, fetch=True)
+    return {"status": "recalled", "matches": results}
 
 
 # --- Action handlers ---
