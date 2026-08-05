@@ -7,7 +7,7 @@ from ..tools.memory_tool import log_recommendation
 advisor_agent = Agent(
     name="advisor_agent",
    model = LiteLlm(
-    model="openrouter/tencent/hy3:free",
+    model="openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
     api_key=os.environ["OPENROUTER_API_KEY"]
 ),
     description="Takes commute data and makes a clear, decisive recommendation. Handles departure time comparisons.",

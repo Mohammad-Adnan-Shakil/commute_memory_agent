@@ -8,7 +8,7 @@ from ..tools.memory_tool import store_route_preference, recall_similar_routes
 route_agent = Agent(
     name="route_agent",
    model = LiteLlm(
-    model="openrouter/tencent/hy3:free",
+    model="openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
     api_key=os.environ["OPENROUTER_API_KEY"]
 ),
     description="Gathers raw commute data: route distance, duration, and known corridor congestion status. Does not make recommendations.",

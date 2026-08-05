@@ -10,7 +10,7 @@ from .tools.memory_tool import log_conversation_turn
 from .sub_agents.advisor_agent import advisor_agent
 
 model = LiteLlm(
-    model="openrouter/tencent/hy3:free",
+    model="openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
     api_key=os.environ["OPENROUTER_API_KEY"]
 )
 root_agent = Agent(
