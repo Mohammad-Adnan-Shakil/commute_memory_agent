@@ -4,6 +4,7 @@ import os
 from ..tools.ors_tool import get_route
 from ..tools.bottleneck_tool import check_bottleneck
 from ..tools.memory_tool import store_route_preference, recall_similar_routes
+from ..tools.locations import resolve_known_location
 
 route_agent = Agent(
     name="route_agent",
@@ -33,8 +34,9 @@ route_agent = Agent(
 "response (e.g. 'You previously asked about this route and preferred to avoid highways') "
 "before reporting the fresh route data. If no match is found, proceed normally without "
 "mentioning anything."
+    "Before estimating coordinates for any place name yourself, you MUST first check if a resolve_known_location tool call returns a match for that place name. If it does, use those exact coordinates — do not override them with your own estimate. Only estimate coordinates yourself for places that resolve_known_location does not recognize."
     "Convert place names to approximate lat/lon coordinates yourself if given place names."
     "After reporting the raw facts, call store_route_preference to log this route query, passing origin, destination, distance_km, duration_min, and any stated preference (empty string if none)."
 ),
-tools=[get_route, check_bottleneck, store_route_preference, recall_similar_routes]
+tools=[get_route, check_bottleneck, store_route_preference, recall_similar_routes, resolve_known_location]
 )
