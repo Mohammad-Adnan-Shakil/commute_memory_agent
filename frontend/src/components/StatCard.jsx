@@ -4,14 +4,21 @@ import { cn } from "../lib/utils";
 
 function AnimatedNumber({ value, duration = 600 }) {
   const [displayed, setDisplayed] = useState(0);
+  const [isText, setIsText] = useState(false);
 
   useEffect(() => {
     if (value === "--" || value == null) {
       setDisplayed(0);
+      setIsText(false);
+      return;
+    }
+    if (typeof value === "string" && value.replace(/[^0-9.]/g, "") === "") {
+      setIsText(true);
       return;
     }
     const num = typeof value === "string" ? parseFloat(value.replace(/[^0-9.]/g, "")) : value;
-    if (isNaN(num)) { setDisplayed(0); return; }
+    if (isNaN(num)) { setIsText(true); return; }
+    setIsText(false);
 
     const startTime = Date.now();
     let raf;
@@ -29,6 +36,7 @@ function AnimatedNumber({ value, duration = 600 }) {
   }, [value, duration]);
 
   if (value === "--" || value == null) return <>{value}</>;
+  if (isText) return <>{value}</>;
   return <>{displayed}</>;
 }
 
