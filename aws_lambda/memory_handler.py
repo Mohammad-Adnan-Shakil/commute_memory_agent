@@ -20,15 +20,19 @@ def _execute_query(query: str, params: tuple, fetch: bool = False):
     Set fetch=True for SELECT queries to return rows.
     """
     conn = _get_connection()
-    with conn.cursor() as cur:
-        cur.execute(query, params)
-        if fetch:
-            rows = cur.fetchall()
-            colnames = [desc[0] for desc in cur.description]
+    try:
+        with conn.cursor() as cur:
+            cur.execute(query, params)
+            if fetch:
+                rows = cur.fetchall()
+                colnames = [desc[0] for desc in cur.description]
+                conn.commit()
+                return [dict(zip(colnames, row)) for row in rows]
             conn.commit()
-            return [dict(zip(colnames, row)) for row in rows]
-        conn.commit()
-        return {"status": "success"}
+            return {"status": "success"}
+    except Exception as e:
+        conn.rollback()
+        raise
 
 
 def _recall_similar_routes(payload: dict) -> dict:
@@ -39,9 +43,17 @@ def _recall_similar_routes(payload: dict) -> dict:
         "ORDER BY preference_embedding <-> %s "
         "LIMIT 3"
     )
-    params = (payload["session_id"], payload.get("embedding", []))
-    results = _execute_query(query, params, fetch=True)
-    return {"status": "recalled", "matches": results}
+    embedding = payload.get("embedding", [])
+    if embedding:
+        embedding_literal = "[" + ",".join(str(x) for x in embedding) + "]"
+    else:
+        embedding_literal = None  # NULL in the database, not an empty vector
+    params = (payload["session_id"], embedding_literal)
+    try:
+        results = _execute_query(query, params, fetch=True)
+        return {"status": "recalled", "matches": results}
+    except Exception as e:
+        return {"error": f"Database write failed: {str(e)}"}
 
 
 # --- Action handlers ---
@@ -58,8 +70,11 @@ def _log_conversation_turn(payload: dict) -> dict:
         payload["content"],
         datetime.now(timezone.utc).isoformat(),
     )
-    _execute_query(query, params)
-    return {"status": "logged", "id": record_id}
+    try:
+        _execute_query(query, params)
+        return {"status": "logged", "id": record_id}
+    except Exception as e:
+        return {"error": f"Database write failed: {str(e)}"}
 
 
 def _store_route_preference(payload: dict) -> dict:
@@ -70,6 +85,11 @@ def _store_route_preference(payload: dict) -> dict:
         "preference_text, preference_embedding, created_at) "
         "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
     )
+    embedding = payload.get("embedding", [])
+    if embedding:
+        embedding_literal = "[" + ",".join(str(x) for x in embedding) + "]"
+    else:
+        embedding_literal = None  # NULL in the database, not an empty vector
     params = (
         record_id,
         payload["session_id"],
@@ -78,11 +98,14 @@ def _store_route_preference(payload: dict) -> dict:
         payload.get("distance_km"),
         payload.get("duration_min"),
         payload.get("preference_text", ""),
-        payload.get("embedding", []),
+        embedding_literal,
         datetime.now(timezone.utc).isoformat(),
     )
-    _execute_query(query, params)
-    return {"status": "logged", "id": record_id}
+    try:
+        _execute_query(query, params)
+        return {"status": "logged", "id": record_id}
+    except Exception as e:
+        return {"error": f"Database write failed: {str(e)}"}
 
 
 def _log_recommendation(payload: dict) -> dict:
@@ -100,8 +123,11 @@ def _log_recommendation(payload: dict) -> dict:
         "pending",
         datetime.now(timezone.utc).isoformat(),
     )
-    _execute_query(query, params)
-    return {"status": "logged", "id": record_id}
+    try:
+        _execute_query(query, params)
+        return {"status": "logged", "id": record_id}
+    except Exception as e:
+        return {"error": f"Database write failed: {str(e)}"}
 
 
 # --- Action router ---
