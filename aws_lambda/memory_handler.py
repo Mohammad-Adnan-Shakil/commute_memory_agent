@@ -27,7 +27,16 @@ def _execute_query(query: str, params: tuple, fetch: bool = False):
                 rows = cur.fetchall()
                 colnames = [desc[0] for desc in cur.description]
                 conn.commit()
-                return [dict(zip(colnames, row)) for row in rows]
+                results = []
+                for row in rows:
+                    record = {}
+                    for col, val in zip(colnames, row):
+                        if hasattr(val, "isoformat"):
+                            record[col] = val.isoformat()
+                        else:
+                            record[col] = val
+                    results.append(record)
+                return results
             conn.commit()
             return {"status": "success"}
     except Exception as e:
