@@ -135,6 +135,30 @@ def extract_distance_duration(events):
     return None, None
 
 
+def extract_recalled_preference(events):
+    """Scans agent events for recall_similar_routes' response, returns the first stored preference match."""
+    for event in events:
+        try:
+            function_responses = event.get_function_responses()
+        except AttributeError:
+            continue
+        if function_responses:
+            for fr in function_responses:
+                if fr.name == "recall_similar_routes":
+                    result = fr.response
+                    if not isinstance(result, dict):
+                        continue
+                    matches = result.get("matches") or []
+                    for m in matches:
+                        if isinstance(m, dict) and m.get("preference_text"):
+                            return {
+                                "origin": m.get("origin"),
+                                "destination": m.get("destination"),
+                                "preference_text": m.get("preference_text"),
+                            }
+    return None
+
+
 def extract_response_text(final_response):
     """
     Safely extract text from final_response.
@@ -188,6 +212,7 @@ async def chat(query: Query):
     route_coords = extract_route_geometry(events)
     congestion_level = extract_congestion_level(events)
     distance_km, duration_min = extract_distance_duration(events)
+    recalled_preference = extract_recalled_preference(events)
 
     # Fallback: parse congestion from text response if tool response wasn't found
     if congestion_level is None:
@@ -210,5 +235,6 @@ async def chat(query: Query):
         "congestion_level": congestion_level,
         "bottleneck_segment_indices": bottleneck_indices,
         "distance_km": distance_km,
-        "duration_min": duration_min
+        "duration_min": duration_min,
+        "recalled_preference": recalled_preference
     }

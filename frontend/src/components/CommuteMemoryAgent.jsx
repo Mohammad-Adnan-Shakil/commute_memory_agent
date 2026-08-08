@@ -9,7 +9,6 @@ import StatCardSkeleton from "./StatCardSkeleton";
 import ResultCard from "./ResultCard";
 import SessionHistory from "./SessionHistory";
 import ArchitectureFlow from "./ArchitectureFlow";
-import { findMatchingQuery } from "../hooks/useMemoryRecall";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
 
@@ -57,8 +56,6 @@ export default function CommuteMemoryAgent() {
     setError(null);
     lastQueryRef.current = raw;
 
-    const currentMemoryMatch = findMatchingQuery(raw);
-
     try {
       const res = await fetch(`${API_URL}/chat`, {
         method: "POST",
@@ -67,6 +64,8 @@ export default function CommuteMemoryAgent() {
       });
       const data = await res.json();
       setSessionId(data.session_id);
+
+      const currentMemoryMatch = data.recalled_preference;
 
       const { from, to } = parseQuery(raw);
       const distanceKm = data.distance_km;
@@ -79,7 +78,9 @@ export default function CommuteMemoryAgent() {
         from,
         to,
         recalled: !!currentMemoryMatch,
-        memoryNote: currentMemoryMatch ? currentMemoryMatch.preference_text : undefined,
+        memoryNote: currentMemoryMatch
+          ? `You previously asked about this route and preferred ${currentMemoryMatch.preference_text}.`
+          : undefined,
         stats: {
           distanceKm: distanceKm != null ? String(distanceKm) : "--",
           durationMin: durationMin != null ? durationMin : "--",
