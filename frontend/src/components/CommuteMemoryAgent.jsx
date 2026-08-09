@@ -12,6 +12,14 @@ import ArchitectureFlow from "./ArchitectureFlow";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
 
+function getOrCreateSessionId() {
+  return localStorage.getItem("commute_agent_session_id") || null;
+}
+
+function saveSessionId(sessionId) {
+  localStorage.setItem("commute_agent_session_id", sessionId);
+}
+
 function parseQuery(raw) {
   const cleaned = raw.trim().replace(/^route (from )?/i, "");
   const match = cleaned.match(/(?:from\s+)?(.+?)\s+to\s+(.+)/i);
@@ -44,7 +52,7 @@ export default function CommuteMemoryAgent() {
   const [result, setResult] = useState(null);
   const [history, setHistory] = useState([]);
   const [isFocused, setIsFocused] = useState(false);
-  const [sessionId, setSessionId] = useState(null);
+  const [sessionId, setSessionId] = useState(() => getOrCreateSessionId());
   const [error, setError] = useState(null);
   const inputRef = useRef(null);
   const lastQueryRef = useRef("");
@@ -64,6 +72,7 @@ export default function CommuteMemoryAgent() {
       });
       const data = await res.json();
       setSessionId(data.session_id);
+      saveSessionId(data.session_id);
 
       const currentMemoryMatch = data.recalled_preference;
 
@@ -114,6 +123,8 @@ export default function CommuteMemoryAgent() {
   const handleHistorySelect = (h, clear) => {
     if (clear) {
       setHistory([]);
+      localStorage.removeItem("commute_agent_session_id");
+      setSessionId(null);
       return;
     }
     setResult(h);
