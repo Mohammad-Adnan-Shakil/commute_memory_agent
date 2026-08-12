@@ -1,13 +1,17 @@
 import asyncio
 import os
-from fastapi import FastAPI
+import uuid
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai.types import Content, Part
 from commute_agent.agent import root_agent
-import uuid
+import psycopg2
+from passlib.context import CryptContext
+from jose import jwt, JWTError
+from datetime import datetime, timedelta, timezone
 
 MOCK_MODE = os.getenv("MOCK_MODE", "false").lower() == "true"
 
@@ -37,6 +41,48 @@ MOCK_RESPONSES = {
 
 app = FastAPI()
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+JWT_SECRET = os.environ.get("JWT_SECRET", "change-this-in-production")
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
+
+
+def get_db_connection():
+    return psycopg2.connect(os.environ["COCKROACHDB_CONNECTION_STRING"])
+
+
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def create_access_token(user_id: str, email: str) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(minutes=JWT_EXPIRE_MINUTES)
+    payload = {"sub": user_id, "email": email, "exp": expire}
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+def decode_access_token(token: str) -> dict | None:
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except JWTError:
+        return None
+
+
+async def get_current_user(authorization: str = Header(None)) -> dict | None:
+    """
+    Returns the decoded JWT payload if a valid Bearer token is present,
+    otherwise None (caller decides whether auth is required).
+    """
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    token = authorization.replace("Bearer ", "")
+    return decode_access_token(token)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -55,6 +101,63 @@ runner = Runner(agent=root_agent, app_name="commute_agent", session_service=sess
 class Query(BaseModel):
     message: str
     session_id: str | None = None
+
+
+class SignupRequest(BaseModel):
+    email: str
+    password: str
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user_id: str
+    email: str
+
+
+@app.post("/signup", response_model=AuthResponse)
+async def signup(req: SignupRequest):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM users WHERE email = %s", (req.email,))
+            if cur.fetchone():
+                raise HTTPException(status_code=400, detail="Email already registered")
+
+            user_id = str(uuid.uuid4())
+            hashed = hash_password(req.password)
+            cur.execute(
+                "INSERT INTO users (id, email, password_hash) VALUES (%s, %s, %s)",
+                (user_id, req.email, hashed)
+            )
+            conn.commit()
+
+        token = create_access_token(user_id, req.email)
+        return AuthResponse(access_token=token, user_id=user_id, email=req.email)
+    finally:
+        conn.close()
+
+
+@app.post("/login", response_model=AuthResponse)
+async def login(req: LoginRequest):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, password_hash FROM users WHERE email = %s", (req.email,))
+            row = cur.fetchone()
+            if not row or not verify_password(req.password, row[1]):
+                raise HTTPException(status_code=401, detail="Invalid email or password")
+            user_id = str(row[0])
+
+        token = create_access_token(user_id, req.email)
+        return AuthResponse(access_token=token, user_id=user_id, email=req.email)
+    finally:
+        conn.close()
 
 
 async def run_with_retry(user_id: str, session_id: str, message_content: Content, max_retries: int = 3):
