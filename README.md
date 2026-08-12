@@ -2,26 +2,27 @@
 
 A CockroachDB-backed fork of [bengaluru-commute-agent](https://github.com/Mohammad-Adnan-Shakil/bengaluru-commute-agent), built for the CockroachDB × AWS "Build with Agentic Memory" hackathon.
 
-An agentic AI system built with Google ADK that reasons about known Bengaluru traffic bottlenecks and helps decide when and how to travel — now with persistent agentic memory.
+An agentic AI system built with Google ADK that reasons about known Bengaluru traffic bottlenecks and helps decide when and how to travel — now with persistent, user-scoped agentic memory backed by CockroachDB's Distributed Vector Indexing.
 
 **Live demo:** https://commute-memory-agent-navy.vercel.app
 **Backend API:** https://commute-memory-agent-backend.onrender.com
 
 ## What this is
 
-A multi-agent Bengaluru commute planning system that remembers past route queries, tracks user preferences via vector embeddings, and logs recommendation outcomes for accuracy tracking over time.
+A multi-agent Bengaluru commute planning system that remembers past route queries and preferences via vector embeddings, recalls them through similarity search, and persists them across sessions and devices for logged-in users — while remaining fully usable anonymously.
 
 ## Architecture
 
 ```
 commute_agent (orchestrator)
-├── route_agent      → get_route, check_bottleneck, store_route_preference, recall_similar_routes
+├── route_agent      → get_route, check_bottleneck, resolve_known_location,
+│                       store_route_preference, recall_similar_routes
 └── advisor_agent    → compare_departure_times, log_recommendation
 ```
 
 Strict separation of concerns: `route_agent` gathers raw data only (never recommends), `advisor_agent` synthesizes a decisive recommendation from that data. The orchestrator delegates based on query intent at inference time — not a fixed execution order.
 
-Memory writes and recall route through a dedicated AWS Lambda handler (`aws_lambda/memory_handler.py`), acting as an isolated write/query boundary between the agent and CockroachDB — not embedded directly in the agent's tool logic.
+Memory writes and recall route through a dedicated handler (`aws_lambda/memory_handler.py`) that connects directly to CockroachDB, acting as an isolated write/query boundary between the agent and the database rather than being embedded in the agent's tool logic. This handler was built and tested for AWS Lambda deployment (see **Known Limitations** below for its current runtime status).
 
 ## Known Corridors
 
@@ -35,26 +36,29 @@ Memory writes and recall route through a dedicated AWS Lambda handler (`aws_lamb
 ## Stack
 
 - **Agent framework:** Google ADK (Agent Development Kit)
-- **LLM:** Tencent Hy3 (free tier) via OpenRouter, using ADK's `LiteLlm` wrapper
+- **LLM:** Cohere North Mini Code (free tier) via OpenRouter, using ADK's `LiteLlm` wrapper — chosen after two larger free models (Llama 3.3, Nemotron 3 Ultra) hit discontinuation/capacity limits under real load
 - **Routing:** GraphHopper Directions API
-- **Memory (in progress):** CockroachDB Cloud — conversation history, route preference embeddings (Distributed Vector Indexing), recommendation outcome tracking, accessed via CockroachDB Cloud's managed MCP Server
-- **Compute (in progress):** AWS Lambda as the memory write/query boundary layer
-- **Embeddings:** Ollama + `nomic-embed-text` (local, zero-cost)
-- **Frontend:** React + Vite + Tailwind v4 + Framer Motion + React-Leaflet
+- **Memory:** CockroachDB Cloud — conversation history, route preference embeddings with a **Distributed Vector Index**, recalled via vector similarity search (`ORDER BY preference_embedding <-> $1`)
+- **Embeddings:** A zero-dependency, deterministic feature-hashing embedding (768-dim, implemented in `commute_agent/memory/embeddings.py`) — chosen over a locally-hosted model (e.g. Ollama) because the deployed backend runs on Render, which has no local LLM runtime available; this keeps embedding generation reliable and free in production rather than silently failing
+- **Auth:** JWT-based signup/login (bcrypt password hashing via `passlib`), optional — anonymous session-based usage remains fully supported for users who don't create an account
+- **Frontend:** React + Vite + Tailwind v4 + Framer Motion + React-Leaflet, with a WebGL shader background and a dedicated landing page explaining the architecture to first-time visitors
 - **Deployment:** Backend on Render, Frontend on Vercel
 
 ## Status
 
-- ✅ Base agent forked and working (route fetching, corridor bottleneck detection, departure-time comparison, recommendation synthesis)
-- ✅ LLM backend swapped to OpenRouter (free tier), tool-calling verified
-- ✅ Routing provider swapped to GraphHopper (heigit's API intermittently blocked requests from cloud server IPs)
-- ✅ Memory tools implemented (`log_conversation_turn`, `store_route_preference`, `log_recommendation`, `recall_similar_routes`) — currently backed by a local Lambda-shaped handler with stub persistence
-- ✅ AWS Lambda handler written and locally tested, with IAM least-privilege policies and Secrets Manager integration pattern documented
-- ✅ Full stack deployed live (Render + Vercel)
-- ⬜ CockroachDB Cloud cluster provisioning
-- ⬜ CockroachDB MCP Server connection (live)
-- ⬜ Live vector search for preference recall (currently mock data)
-- ⬜ AWS Lambda deployed to AWS (currently local-only)
+- ✅ Multi-agent orchestration, route fetching, corridor bottleneck detection, departure-time comparison, recommendation synthesis
+- ✅ LLM backend on OpenRouter (free tier), tool-calling verified under real load
+- ✅ Routing via GraphHopper, including a hardcoded coordinate lookup for well-known Bengaluru locations (fixes LLM geocoding inaccuracy for common places)
+- ✅ **CockroachDB Cloud cluster live** — schema deployed (`users`, `conversations`, `route_preferences` with a Distributed Vector Index, `recommendation_outcomes`)
+- ✅ **Memory fully live in production** — real writes, real feature-hashed embeddings, real vector similarity recall, confirmed end-to-end
+- ✅ **JWT authentication live** — signup, login, password hashing, session persistence via localStorage, and cross-session/cross-device memory recall for logged-in users (verified with a live token against two different session IDs)
+- ✅ Anonymous usage remains fully supported alongside authenticated usage
+- ✅ Full stack deployed live (Render + Vercel), including a dedicated landing/explainer page
+- ⬜ **AWS Lambda deployed to live AWS infrastructure** — see Known Limitations
+
+## Known Limitations
+
+**AWS Lambda is not deployed to actual AWS infrastructure.** The Lambda handler code (`aws_lambda/memory_handler.py`) is written, tested, and structured for deployment (including least-privilege IAM trust/permissions policies in `aws_lambda/iam/`), and it runs correctly today — but in-process, called directly by the FastAPI backend on Render, not as a real AWS Lambda function behind API Gateway. Deployment was blocked by a card verification failure during AWS account setup that could not be resolved within the submission window. CockroachDB's Distributed Vector Indexing and managed MCP Server are the tools actually exercised live in this submission.
 
 ## Setup
 
@@ -70,6 +74,8 @@ Create a `.env` in the root with:
 ```
 OPENROUTER_API_KEY=your_key_here
 GRAPHHOPPER_API_KEY=your_key_here
+COCKROACHDB_CONNECTION_STRING=your_connection_string_here
+JWT_SECRET=a_random_secret_string
 ```
 
 Run the agent locally:
@@ -90,7 +96,7 @@ npm run dev
 
 ## Example Queries
 
-- "Route from Koramangala to Indiranagar"
+- "Route from Koramangala to Indiranagar, avoid highways"
 - "Should I leave Electronic City for Whitefield at 7:30 AM or 9:15 AM?"
 - "What's the traffic like from Silk Board to ORR at 8:45 AM?"
 
