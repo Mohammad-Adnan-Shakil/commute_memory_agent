@@ -1,13 +1,14 @@
 import { useState } from "react";
 import CommuteMemoryAgent from "./components/CommuteMemoryAgent";
+import LandingPage from "./components/LandingPage";
 import Nav from "./components/Nav";
 import LoginPage from "./components/auth/LoginPage";
 import SignupPage from "./components/auth/SignupPage";
 import { useAuth } from "./hooks/useAuth";
 
 export default function App() {
-  const [view, setView] = useState("chat");
   const { user, isAuthenticated, login, logout } = useAuth();
+  const [view, setView] = useState(() => (isAuthenticated ? "chat" : "landing"));
 
   if (view === "login") {
     return (
@@ -17,7 +18,7 @@ export default function App() {
           setView("chat");
         }}
         onSwitchToSignup={() => setView("signup")}
-        onBack={() => setView("chat")}
+        onBack={() => setView(isAuthenticated ? "chat" : "landing")}
       />
     );
   }
@@ -30,7 +31,17 @@ export default function App() {
           setView("chat");
         }}
         onSwitchToLogin={() => setView("login")}
-        onBack={() => setView("chat")}
+        onBack={() => setView(isAuthenticated ? "chat" : "landing")}
+      />
+    );
+  }
+
+  if (view === "landing" && !isAuthenticated) {
+    return (
+      <LandingPage
+        onSignupClick={() => setView("signup")}
+        onLoginClick={() => setView("login")}
+        onTryWithoutAccount={() => setView("chat")}
       />
     );
   }
@@ -42,8 +53,11 @@ export default function App() {
         user={user}
         onLoginClick={() => setView("login")}
         onSignupClick={() => setView("signup")}
-        onLogoutClick={logout}
-        onLogoClick={() => setView("chat")}
+        onLogoutClick={() => {
+          logout();
+          setView("landing");
+        }}
+        onLogoClick={() => setView(isAuthenticated ? "chat" : "landing")}
       />
       <CommuteMemoryAgent />
     </>

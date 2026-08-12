@@ -1,6 +1,22 @@
 import { motion } from "framer-motion";
 import Logo from "./Logo";
 
+function formatEmail(email) {
+  if (!email) return "";
+  if (email.length <= 24) return email;
+  const parts = email.split("@");
+  if (parts.length !== 2) {
+    return email.slice(0, 21) + "...";
+  }
+  const [local, domain] = parts;
+  const domainPart = "@" + domain;
+  const maxLocalLen = 24 - domainPart.length - 3;
+  if (maxLocalLen <= 0) {
+    return email.slice(0, 21) + "...";
+  }
+  return local.slice(0, maxLocalLen) + "..." + domainPart;
+}
+
 export default function Nav({ isAuthenticated, user, onLoginClick, onSignupClick, onLogoutClick, onLogoClick }) {
   return (
     <motion.nav
@@ -13,7 +29,7 @@ export default function Nav({ isAuthenticated, user, onLoginClick, onSignupClick
         type="button"
         onClick={onLogoClick}
         className="flex items-center rounded-lg transition-opacity hover:opacity-80"
-        aria-label="Back to chat"
+        aria-label="Home"
       >
         <Logo />
       </button>
@@ -21,8 +37,11 @@ export default function Nav({ isAuthenticated, user, onLoginClick, onSignupClick
       <div className="flex items-center gap-3">
         {isAuthenticated ? (
           <>
-            <span className="hidden text-xs text-neutral-500 sm:inline">
-              {user?.email}
+            <span
+              className="hidden text-xs text-neutral-500 sm:inline max-w-[200px] truncate"
+              title={user?.email}
+            >
+              {formatEmail(user?.email)}
             </span>
             <button
               type="button"
