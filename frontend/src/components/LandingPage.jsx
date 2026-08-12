@@ -97,36 +97,36 @@ export default function LandingPage({ onSignupClick, onLoginClick, onTryWithoutA
             How it works
           </p>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="flex flex-col items-center text-center rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 backdrop-blur-md transition-colors hover:border-teal-400/30">
+            <div className="flex flex-col items-center text-center rounded-2xl border border-white/[0.08] bg-[#060911]/90 p-6 backdrop-blur-xl transition-colors hover:border-teal-400/30">
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-teal-300 shadow-[0_0_15px_-3px_rgba(45,212,191,0.3)]">
                 <MessageSquare className="h-5 w-5" />
               </div>
-              <h3 className="text-sm font-medium text-neutral-200 mb-1">Ask in plain English</h3>
-              <p className="text-xs text-neutral-400 leading-relaxed">Describe your origin, destination, and timing naturally.</p>
+              <h3 className="text-sm font-medium text-neutral-100 mb-1">Ask in plain English</h3>
+              <p className="text-xs text-neutral-300 leading-relaxed">Describe your origin, destination, and timing naturally.</p>
             </div>
 
-            <div className="flex flex-col items-center text-center rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 backdrop-blur-md transition-colors hover:border-teal-400/30">
+            <div className="flex flex-col items-center text-center rounded-2xl border border-white/[0.08] bg-[#060911]/90 p-6 backdrop-blur-xl transition-colors hover:border-teal-400/30">
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-teal-300 shadow-[0_0_15px_-3px_rgba(45,212,191,0.3)]">
                 <Navigation className="h-5 w-5" />
               </div>
-              <h3 className="text-sm font-medium text-neutral-200 mb-1">Live routing data</h3>
-              <p className="text-xs text-neutral-400 leading-relaxed">Agent fetches live routing and checks known Bengaluru traffic corridors.</p>
+              <h3 className="text-sm font-medium text-neutral-100 mb-1">Live routing data</h3>
+              <p className="text-xs text-neutral-300 leading-relaxed">Agent fetches live routing and checks known Bengaluru traffic corridors.</p>
             </div>
 
-            <div className="flex flex-col items-center text-center rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 backdrop-blur-md transition-colors hover:border-teal-400/30">
+            <div className="flex flex-col items-center text-center rounded-2xl border border-white/[0.08] bg-[#060911]/90 p-6 backdrop-blur-xl transition-colors hover:border-teal-400/30">
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-teal-300 shadow-[0_0_15px_-3px_rgba(45,212,191,0.3)]">
                 <UserCheck className="h-5 w-5" />
               </div>
-              <h3 className="text-sm font-medium text-neutral-200 mb-1">Persistent memory</h3>
-              <p className="text-xs text-neutral-400 leading-relaxed">Preferences remembered — sign up to keep them across devices & sessions.</p>
+              <h3 className="text-sm font-medium text-neutral-100 mb-1">Persistent memory</h3>
+              <p className="text-xs text-neutral-300 leading-relaxed">Preferences remembered — sign up to keep them across devices & sessions.</p>
             </div>
 
-            <div className="flex flex-col items-center text-center rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 backdrop-blur-md transition-colors hover:border-teal-400/30">
+            <div className="flex flex-col items-center text-center rounded-2xl border border-white/[0.08] bg-[#060911]/90 p-6 backdrop-blur-xl transition-colors hover:border-teal-400/30">
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-teal-300 shadow-[0_0_15px_-3px_rgba(45,212,191,0.3)]">
                 <Sparkles className="h-5 w-5" />
               </div>
-              <h3 className="text-sm font-medium text-neutral-200 mb-1">Sharper over time</h3>
-              <p className="text-xs text-neutral-400 leading-relaxed">Every future answer gets smarter based on what it's learned.</p>
+              <h3 className="text-sm font-medium text-neutral-100 mb-1">Sharper over time</h3>
+              <p className="text-xs text-neutral-300 leading-relaxed">Every future answer gets smarter based on what it's learned.</p>
             </div>
           </div>
         </motion.div>
@@ -136,13 +136,13 @@ export default function LandingPage({ onSignupClick, onLoginClick, onTryWithoutA
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.55, duration: 0.6 }}
-          className="mt-20 w-full max-w-4xl rounded-2xl border border-white/[0.08] bg-white/[0.02] p-8 backdrop-blur-md"
+          className="mt-20 w-full max-w-4xl rounded-2xl border border-white/[0.08] bg-[#060911]/90 p-8 backdrop-blur-xl"
         >
           <p className="mb-8 text-center text-xs uppercase tracking-widest text-neutral-500 font-[family-name:var(--font-heading)]">
             Agentic memory architecture
           </p>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-left">
-            <div className="flex flex-col gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="flex flex-col gap-2 rounded-xl border border-white/[0.08] bg-[#0a1220]/90 p-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-teal-300">
                   <Bot className="h-5 w-5" />
@@ -152,12 +152,12 @@ export default function LandingPage({ onSignupClick, onLoginClick, onTryWithoutA
                   <span className="text-[10px] text-teal-400">Agent framework</span>
                 </div>
               </div>
-              <p className="text-[11px] text-neutral-400 mt-2 leading-relaxed">
+              <p className="text-[11px] text-neutral-300 mt-2 leading-relaxed">
                 Multi-agent orchestration: a router agent delegates to specialized route and advisor agents.
               </p>
             </div>
 
-            <div className="flex flex-col gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="flex flex-col gap-2 rounded-xl border border-white/[0.08] bg-[#0a1220]/90 p-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-teal-300">
                   <Network className="h-5 w-5" />
@@ -167,12 +167,12 @@ export default function LandingPage({ onSignupClick, onLoginClick, onTryWithoutA
                   <span className="text-[10px] text-teal-400">LLM routing</span>
                 </div>
               </div>
-              <p className="text-[11px] text-neutral-400 mt-2 leading-relaxed">
+              <p className="text-[11px] text-neutral-300 mt-2 leading-relaxed">
                 LLM reasoning and tool-calling, routed to a free-tier model.
               </p>
             </div>
 
-            <div className="flex flex-col gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="flex flex-col gap-2 rounded-xl border border-white/[0.08] bg-[#0a1220]/90 p-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-teal-300">
                   <MapPin className="h-5 w-5" />
@@ -182,12 +182,12 @@ export default function LandingPage({ onSignupClick, onLoginClick, onTryWithoutA
                   <span className="text-[10px] text-teal-400">Live routing API</span>
                 </div>
               </div>
-              <p className="text-[11px] text-neutral-400 mt-2 leading-relaxed">
+              <p className="text-[11px] text-neutral-300 mt-2 leading-relaxed">
                 Real-time distance, duration, and turn-by-turn road geometry for Bengaluru corridors.
               </p>
             </div>
 
-            <div className="flex flex-col gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="flex flex-col gap-2 rounded-xl border border-white/[0.08] bg-[#0a1220]/90 p-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-teal-300">
                   <Database className="h-5 w-5" />
@@ -197,7 +197,7 @@ export default function LandingPage({ onSignupClick, onLoginClick, onTryWithoutA
                   <span className="text-[10px] text-teal-400">Persistent memory</span>
                 </div>
               </div>
-              <p className="text-[11px] text-neutral-400 mt-2 leading-relaxed">
+              <p className="text-[11px] text-neutral-300 mt-2 leading-relaxed">
                 Route preferences stored as vector embeddings, recalled via similarity search.
               </p>
             </div>

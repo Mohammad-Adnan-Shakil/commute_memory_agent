@@ -23,22 +23,23 @@ export default function Nav({ isAuthenticated, user, onLoginClick, onSignupClick
       initial={{ opacity: 0, y: -12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="relative z-30 mx-auto flex max-w-4xl items-center justify-between px-6 pt-4"
+      className="relative z-30 w-full border-b border-white/[0.06] bg-[#060911]/80 backdrop-blur-xl"
     >
-      <button
-        type="button"
-        onClick={onLogoClick}
-        className="flex items-center rounded-lg transition-opacity hover:opacity-80"
-        aria-label="Home"
-      >
-        <Logo />
-      </button>
+      <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-3">
+        <button
+          type="button"
+          onClick={onLogoClick}
+          className="flex items-center rounded-lg transition-opacity hover:opacity-80"
+          aria-label="Home"
+        >
+          <Logo />
+        </button>
 
-      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
         {isAuthenticated ? (
           <>
             <span
-              className="hidden text-xs text-neutral-500 sm:inline max-w-[200px] truncate"
+              className="hidden text-xs text-neutral-400 sm:inline max-w-[200px] truncate"
               title={user?.email}
             >
               {formatEmail(user?.email)}
@@ -69,6 +70,7 @@ export default function Nav({ isAuthenticated, user, onLoginClick, onSignupClick
             </button>
           </>
         )}
+        </div>
       </div>
     </motion.nav>
   );
