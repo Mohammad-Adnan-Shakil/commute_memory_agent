@@ -279,17 +279,30 @@ def extract_response_text(final_response):
 
 
 @app.post("/chat")
-async def chat(query: Query):
+async def chat(query: Query, authorization: str = Header(None)):
+    user_id = None
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.replace("Bearer ", "")
+        payload = decode_access_token(token)
+        if payload:
+            user_id = payload.get("sub")
+
     if MOCK_MODE:
         return MOCK_RESPONSES["default"]
+
     session_id = query.session_id or str(uuid.uuid4())
     session = await session_service.get_session(
         app_name="commute_agent", user_id="user", session_id=session_id
     )
     if not session:
         session = await session_service.create_session(
-            app_name="commute_agent", user_id="user", session_id=session_id
+            app_name="commute_agent", user_id="user", session_id=session_id,
+            state={"user_id": user_id} if user_id else {}
         )
+    elif user_id and session.state.get("user_id") != user_id:
+        # Session exists but user_id changed/wasn't set yet (e.g. user just logged in
+        # mid-session) — update the session state to reflect the authenticated user.
+        session.state["user_id"] = user_id
 
     message_content = Content(role="user", parts=[Part(text=query.message)])
 

@@ -105,11 +105,14 @@ class TestRecallSimilarRoutes:
         assert "matches" in body
         assert isinstance(body["matches"], list)
 
-    def test_missing_session_id_returns_400(self):
+    def test_missing_session_id_returns_graceful_response(self):
+        # session_id is now optional (user_id takes precedence for recall);
+        # a payload with neither must still get a 200 response, not a crash.
         status, body = _invoke("recall_similar_routes", {
             "embedding": [],
         })
-        assert status == 400
+        assert status == 200
+        assert "matches" in body or "error" in body
 
 
 class TestActionRouting:

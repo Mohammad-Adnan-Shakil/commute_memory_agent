@@ -10,6 +10,14 @@ from memory_handler import lambda_handler
 import json
 
 
+def _get_user_id(tool_context: ToolContext) -> str | None:
+    """Returns the authenticated user's ID if present in session state, else None."""
+    try:
+        return tool_context._invocation_context.session.state.get("user_id")
+    except Exception:
+        return None
+
+
 def recall_similar_routes(
     origin: str, destination: str, tool_context: ToolContext
 ) -> dict:
@@ -19,10 +27,12 @@ def recall_similar_routes(
     prior context instead of treating every query as brand new.
     """
     session_id = tool_context._invocation_context.session.id
+    user_id = _get_user_id(tool_context)
     query_text = f"{origin} to {destination}"
     embedding = _get_embedding(query_text)
     return _invoke_memory_lambda("recall_similar_routes", {
         "session_id": session_id,
+        "user_id": user_id,
         "embedding": embedding,
     })
 
@@ -43,8 +53,10 @@ def _get_embedding(text: str) -> list[float]:
 def log_conversation_turn(role: str, content: str, tool_context: ToolContext) -> dict:
     """Logs a single conversation turn to persistent memory via the memory Lambda."""
     session_id = tool_context._invocation_context.session.id
+    user_id = _get_user_id(tool_context)
     return _invoke_memory_lambda("log_conversation", {
         "session_id": session_id,
+        "user_id": user_id,
         "role": role,
         "content": content,
     })
@@ -55,9 +67,11 @@ def store_route_preference(
     duration_min: float, tool_context: ToolContext, preference_text: str = "",
 ) -> dict:
     session_id = tool_context._invocation_context.session.id
+    user_id = _get_user_id(tool_context)
     embedding = _get_embedding(preference_text) if preference_text else []
     return _invoke_memory_lambda("store_preference", {
         "session_id": session_id,
+        "user_id": user_id,
         "origin": origin,
         "destination": destination,
         "distance_km": distance_km,
@@ -71,8 +85,10 @@ def log_recommendation(
     recommended_departure: str, reasoning: str, tool_context: ToolContext,
 ) -> dict:
     session_id = tool_context._invocation_context.session.id
+    user_id = _get_user_id(tool_context)
     return _invoke_memory_lambda("log_recommendation", {
         "session_id": session_id,
+        "user_id": user_id,
         "recommended_departure": recommended_departure,
         "reasoning": reasoning,
     })

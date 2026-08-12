@@ -45,36 +45,50 @@ def _execute_query(query: str, params: tuple, fetch: bool = False):
 
 
 def _recall_similar_routes(payload: dict) -> dict:
-    query = (
-        "SELECT origin, destination, preference_text, created_at "
-        "FROM route_preferences "
-        "WHERE session_id = %s "
-        "ORDER BY preference_embedding <-> %s "
-        "LIMIT 3"
-    )
+    user_id = payload.get("user_id")
+    session_id = payload.get("session_id")
     embedding = payload.get("embedding", [])
     if embedding:
         embedding_literal = "[" + ",".join(str(x) for x in embedding) + "]"
     else:
         embedding_literal = None  # NULL in the database, not an empty vector
-    params = (payload["session_id"], embedding_literal)
+
+    if user_id:
+        query = (
+            "SELECT origin, destination, preference_text, created_at "
+            "FROM route_preferences "
+            "WHERE user_id = %s "
+            "ORDER BY preference_embedding <-> %s "
+            "LIMIT 3"
+        )
+        params = (user_id, embedding_literal)
+    else:
+        query = (
+            "SELECT origin, destination, preference_text, created_at "
+            "FROM route_preferences "
+            "WHERE session_id = %s "
+            "ORDER BY preference_embedding <-> %s "
+            "LIMIT 3"
+        )
+        params = (session_id, embedding_literal)
     try:
         results = _execute_query(query, params, fetch=True)
         return {"status": "recalled", "matches": results}
     except Exception as e:
-        return {"error": f"Database write failed: {str(e)}"}
+        return {"error": f"Database read failed: {str(e)}"}
 
 
 # --- Action handlers ---
 def _log_conversation_turn(payload: dict) -> dict:
     record_id = str(uuid.uuid4())
     query = (
-        "INSERT INTO conversations (id, session_id, role, content, created_at) "
-        "VALUES (%s, %s, %s, %s, %s)"
+        "INSERT INTO conversations (id, session_id, user_id, role, content, created_at) "
+        "VALUES (%s, %s, %s, %s, %s, %s)"
     )
     params = (
         record_id,
         payload["session_id"],
+        payload.get("user_id"),
         payload["role"],
         payload["content"],
         datetime.now(timezone.utc).isoformat(),
@@ -90,9 +104,9 @@ def _store_route_preference(payload: dict) -> dict:
     record_id = str(uuid.uuid4())
     query = (
         "INSERT INTO route_preferences "
-        "(id, session_id, origin, destination, distance_km, duration_min, "
+        "(id, session_id, user_id, origin, destination, distance_km, duration_min, "
         "preference_text, preference_embedding, created_at) "
-        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
     )
     embedding = payload.get("embedding", [])
     if embedding:
@@ -102,6 +116,7 @@ def _store_route_preference(payload: dict) -> dict:
     params = (
         record_id,
         payload["session_id"],
+        payload.get("user_id"),
         payload["origin"],
         payload["destination"],
         payload.get("distance_km"),
@@ -121,12 +136,13 @@ def _log_recommendation(payload: dict) -> dict:
     record_id = str(uuid.uuid4())
     query = (
         "INSERT INTO recommendation_outcomes "
-        "(id, session_id, recommended_departure, reasoning, actual_outcome, created_at) "
-        "VALUES (%s, %s, %s, %s, %s, %s)"
+        "(id, session_id, user_id, recommended_departure, reasoning, actual_outcome, created_at) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s)"
     )
     params = (
         record_id,
         payload["session_id"],
+        payload.get("user_id"),
         payload["recommended_departure"],
         payload["reasoning"],
         "pending",
