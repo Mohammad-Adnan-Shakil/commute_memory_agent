@@ -1,0 +1,56 @@
+import { motion } from "framer-motion";
+import Logo from "./Logo";
+
+export default function Nav({ isAuthenticated, user, onLoginClick, onSignupClick, onLogoutClick, onLogoClick }) {
+  return (
+    <motion.nav
+      initial={{ opacity: 0, y: -12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="relative z-30 mx-auto flex max-w-4xl items-center justify-between px-6 pt-4"
+    >
+      <button
+        type="button"
+        onClick={onLogoClick}
+        className="flex items-center rounded-lg transition-opacity hover:opacity-80"
+        aria-label="Back to chat"
+      >
+        <Logo />
+      </button>
+
+      <div className="flex items-center gap-3">
+        {isAuthenticated ? (
+          <>
+            <span className="hidden text-xs text-neutral-500 sm:inline">
+              {user?.email}
+            </span>
+            <button
+              type="button"
+              onClick={onLogoutClick}
+              className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs text-neutral-300 transition-colors hover:border-rose-400/30 hover:text-rose-300"
+            >
+              Log out
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={onLoginClick}
+              className="rounded-lg px-3.5 py-1.5 text-sm text-neutral-300 transition-colors hover:text-white"
+            >
+              Log in
+            </button>
+            <button
+              type="button"
+              onClick={onSignupClick}
+              className="rounded-lg bg-teal-400 px-3.5 py-1.5 text-sm font-semibold text-black transition-all hover:bg-teal-300 active:scale-[0.97]"
+            >
+              Sign up
+            </button>
+          </>
+        )}
+      </div>
+    </motion.nav>
+  );
+}

@@ -9,6 +9,7 @@ import StatCardSkeleton from "./StatCardSkeleton";
 import ResultCard from "./ResultCard";
 import SessionHistory from "./SessionHistory";
 import ArchitectureFlow from "./ArchitectureFlow";
+import { useAuth } from "../hooks/useAuth";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
 
@@ -56,6 +57,7 @@ export default function CommuteMemoryAgent() {
   const [error, setError] = useState(null);
   const inputRef = useRef(null);
   const lastQueryRef = useRef("");
+  const { token } = useAuth();
 
   const runQuery = useCallback(async (raw) => {
     if (!raw.trim() || isThinking) return;
@@ -65,9 +67,13 @@ export default function CommuteMemoryAgent() {
     lastQueryRef.current = raw;
 
     try {
+      const headers = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
       const res = await fetch(`${API_URL}/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ message: raw, session_id: sessionId }),
       });
       const data = await res.json();
@@ -110,7 +116,7 @@ export default function CommuteMemoryAgent() {
     } finally {
       setIsThinking(false);
     }
-  }, [isThinking, sessionId]);
+  }, [isThinking, sessionId, token]);
 
   const handleSubmit = useCallback((queryOverride) => {
     const raw = queryOverride != null ? queryOverride : query;
