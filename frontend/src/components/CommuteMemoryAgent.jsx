@@ -2,14 +2,13 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, RefreshCw, X } from "lucide-react";
 import BackgroundFX from "./BackgroundFX";
-import Logo from "./Logo";
 import HeroSection from "./HeroSection";
+import { useAuth } from "../hooks/useAuth";
 import SearchForm from "./SearchForm";
 import StatCardSkeleton from "./StatCardSkeleton";
 import ResultCard from "./ResultCard";
 import SessionHistory from "./SessionHistory";
 import ArchitectureFlow from "./ArchitectureFlow";
-import { useAuth } from "../hooks/useAuth";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8001";
 
@@ -153,10 +152,6 @@ export default function CommuteMemoryAgent() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#060911] text-white">
       <BackgroundFX />
-
-      <div className="relative z-10 mx-auto flex max-w-4xl items-center px-6 pt-4">
-        <Logo />
-      </div>
 
       <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-6 pt-12 pb-10">
         <HeroSection />

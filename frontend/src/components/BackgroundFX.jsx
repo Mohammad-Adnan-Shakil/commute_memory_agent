@@ -43,22 +43,6 @@ export default function BackgroundFX() {
         <DotParticle x={40} y={80} delay={3} />
         <DotParticle x={80} y={110} delay={3.5} />
       </svg>
-
-      {[0, 1, 2].map((i) => (
-        <motion.div
-          key={i}
-          className="absolute h-px w-1/3 bg-gradient-to-r from-transparent via-teal-400/30 to-transparent"
-          style={{ top: `${20 + i * 28}%` }}
-          initial={{ x: "-100%" }}
-          animate={{ x: "220%" }}
-          transition={{
-            duration: 6 + i * 1.5,
-            repeat: Infinity,
-            ease: "linear",
-            delay: i * 1.2,
-          }}
-        />
-      ))}
     </div>
   );
 }
