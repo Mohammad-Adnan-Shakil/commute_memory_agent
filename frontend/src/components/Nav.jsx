@@ -23,7 +23,7 @@ export default function Nav({ isAuthenticated, user, onLoginClick, onSignupClick
       initial={{ opacity: 0, y: -12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="relative z-30 w-full border-b border-white/[0.08] bg-[#060911]/60 backdrop-blur-xl"
+      className="relative z-30 w-full border-b border-white/[0.08] bg-[#060911]/80 backdrop-blur-xl"
     >
       <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-3">
         <button

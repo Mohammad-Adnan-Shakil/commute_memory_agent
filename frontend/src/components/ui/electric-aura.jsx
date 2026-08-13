@@ -524,7 +524,6 @@ export function ShaderBackground({ className }) {
     }
     requestRender();
     return () => {
-      console.log('shader cleanup ran');
       disposed = true;
       cancelAnimationFrame(raf);
       resizeObserver.disconnect();

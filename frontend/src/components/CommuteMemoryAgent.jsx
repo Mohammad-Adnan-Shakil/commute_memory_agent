@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, RefreshCw, X } from "lucide-react";
-import BackgroundFX from "./BackgroundFX";
+import { ShaderBackground } from "./ui/electric-aura";
 import HeroSection from "./HeroSection";
 import { useAuth } from "../hooks/useAuth";
 import SearchForm from "./SearchForm";
@@ -151,7 +151,9 @@ export default function CommuteMemoryAgent() {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#060911] text-white">
-      <BackgroundFX />
+      <div className="absolute inset-0 z-0">
+        <ShaderBackground className="h-full w-full" />
+      </div>
 
       <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-6 pt-12 pb-10">
         <HeroSection />
