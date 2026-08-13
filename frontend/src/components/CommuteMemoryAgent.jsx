@@ -152,7 +152,7 @@ export default function CommuteMemoryAgent() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#060911] text-white">
       <div className="absolute inset-0 z-0">
-        <ShaderBackground className="h-full w-full" />
+        <ShaderBackground className="h-full w-full" intensity={0.1} />
       </div>
 
       <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-6 pt-12 pb-10">

@@ -21,6 +21,7 @@ uniform vec4 u_finish;
 uniform vec4 u_transform;
 uniform vec4 u_space;
 uniform vec4 u_cursor;
+uniform float u_fade;
 
 #define u_resolution u_scene.xy
 #define u_time u_scene.z
@@ -246,6 +247,7 @@ void main() {
   if (u_grain > 0.0001)
     col += (grainHash(
       gl_FragCoord.xy + vec2(u_seed * 17.0, u_seed * 31.0)) - 0.5) * u_grain;
+  col *= u_fade;
   gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
 }
 `;
@@ -276,16 +278,20 @@ const UNIFORMS = {
   cursorRadius: 0.460,
   oklab: 0.0,
   timeScale: 0.746,
+  fade: 1.0,
 };
 
 const pendingContextReleases = new WeakMap();
 
-export function ShaderBackground({ className }) {
+export function ShaderBackground({ className, intensity = 1 }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const glow = Math.max(0, Math.min(1, intensity));
+    const fade = 0.25 + 0.75 * glow;
+    const wob = UNIFORMS.intensity * (0.5 + 0.5 * glow);
     const pendingRelease = pendingContextReleases.get(canvas);
     if (pendingRelease !== undefined) window.clearTimeout(pendingRelease);
     pendingContextReleases.delete(canvas);
@@ -328,12 +334,13 @@ export function ShaderBackground({ className }) {
       transform: gl.getUniformLocation(program, "u_transform"),
       space: gl.getUniformLocation(program, "u_space"),
       cursor: gl.getUniformLocation(program, "u_cursor"),
+      fade: gl.getUniformLocation(program, "u_fade"),
     };
     gl.uniform3fv(uni.colors, new Float32Array(UNIFORMS.colors.flat()));
     gl.uniform4f(
       uni.shape,
       UNIFORMS.scale,
-      UNIFORMS.intensity,
+      wob,
       UNIFORMS.paramA,
       UNIFORMS.warp,
     );
@@ -365,6 +372,7 @@ export function ShaderBackground({ className }) {
       UNIFORMS.cursorStrength,
       UNIFORMS.cursorRadius,
     );
+    gl.uniform1f(uni.fade, fade);
 
     let targetX = 0;
     let targetY = 0;
@@ -551,7 +559,7 @@ export function ShaderBackground({ className }) {
       }, 0);
       pendingContextReleases.set(canvas, releaseTimer);
     };
-  }, []);
+  }, [intensity]);
 
   return (
     <canvas ref={canvasRef} className={className} style={{ display: "block", width: "100%", height: "100%" }} />
