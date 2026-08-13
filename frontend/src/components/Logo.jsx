@@ -52,7 +52,7 @@ export default memo(function Logo({ size = 28, showWordmark = true, className = 
     <div className={`inline-flex items-center gap-2.5 ${className}`}>
       <LogoIcon size={size} />
       {showWordmark && (
-        <span className="text-sm font-semibold tracking-tight text-white/70 font-[family-name:var(--font-heading)]">
+        <span className="text-sm font-semibold tracking-tight text-white/90 font-[family-name:var(--font-heading)]">
           Commute Memory Agent
         </span>
       )}
